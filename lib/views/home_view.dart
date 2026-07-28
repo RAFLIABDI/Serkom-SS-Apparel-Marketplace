@@ -9,6 +9,7 @@ import 'cart_view.dart';
 import 'login_view.dart';
 import 'history_view.dart';
 
+// Halaman beranda: menampilkan banner promo, kategori, dan daftar produk
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -154,6 +155,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  // Membangun drawer (menu samping) dengan info user, link ke riwayat, keranjang, dan login/logout
   Widget _buildDrawer(BuildContext context, CartProvider cartProvider) {
     return Drawer(
       child: ListView(
@@ -237,6 +239,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  // Membangun banner promo horizontal (PageView) yang menampilkan 5 produk teratas
   Widget _buildPromoBanner(List<PlantModel> products) {
     return SizedBox(
       height: 160,
@@ -346,6 +349,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  // Membangun tombol kategori (Kaos, Tas, Jaket, Aksesoris) untuk filter produk
   Widget _buildCategories() {
     final categories = [
       {'icon': Icons.checkroom, 'label': 'Kaos'},
@@ -398,6 +402,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  // Membangun grid produk dengan filter berdasarkan kategori dan kata kunci pencarian
   Widget _buildProductGrid(List<PlantModel> allProducts) {
     var products = allProducts;
     if (_selectedCategory.isNotEmpty) {

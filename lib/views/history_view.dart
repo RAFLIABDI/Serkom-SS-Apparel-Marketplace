@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 
+// Halaman riwayat pesanan: menampilkan semua pesanan yang sudah dibuat
 class HistoryView extends StatefulWidget {
   const HistoryView({super.key});
 
@@ -14,6 +15,7 @@ class HistoryView extends StatefulWidget {
 class _HistoryViewState extends State<HistoryView> {
   final ImagePicker _picker = ImagePicker();
 
+  // Upload bukti pembayaran dari galeri untuk pesanan tertentu
   Future<void> _uploadPaymentProof(int orderId) async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null) return;

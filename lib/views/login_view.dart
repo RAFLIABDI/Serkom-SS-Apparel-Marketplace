@@ -4,6 +4,7 @@ import '../providers/cart_provider.dart';
 import 'register_view.dart';
 import 'checkout_view.dart';
 
+// Halaman login: form email & password untuk masuk ke akun
 class LoginView extends StatefulWidget {
   final bool fromCheckout;
   const LoginView({super.key, this.fromCheckout = false});
@@ -25,6 +26,7 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
+  // Proses login: validasi form, cek email & password, navigasi ke checkout atau kembali
   void _login() {
     if (!_formKey.currentState!.validate()) return;
     final cartProvider = Provider.of<CartProvider>(context, listen: false);

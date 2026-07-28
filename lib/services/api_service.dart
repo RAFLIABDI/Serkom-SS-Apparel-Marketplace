@@ -2,9 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/plant_model.dart';
 
+// Service untuk mengambil data produk dari API dan data lokal
 class ApiService {
+  // URL base API eksternal (fakestoreapi.com) untuk gambar produk
   static const String baseUrl = 'https://fakestoreapi.com';
 
+  // Data produk lokal (judul, deskripsi, harga, kategori, rating)
+  // Digunakan karena produk di marketplace ini adalah produk custom lokal
   static final List<Map<String, dynamic>> _localProducts = [
     {
       'id': 1,
@@ -210,6 +214,8 @@ class ApiService {
 
   static List<Map<String, dynamic>> get localProducts => _localProducts;
 
+  // Mengambil data produk: menggabungkan data lokal dengan gambar dari API
+  // Jika API gagal, tetap mengembalikan produk lokal dengan gambar kosong
   static Future<List<PlantModel>> getProducts() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/products'));

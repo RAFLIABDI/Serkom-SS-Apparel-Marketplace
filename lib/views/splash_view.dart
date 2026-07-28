@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_view.dart';
 
+// Halaman splash screen (layar pembuka) yang muncul saat aplikasi pertama kali dibuka
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
 
@@ -9,6 +10,7 @@ class SplashView extends StatefulWidget {
 }
 
 class _SplashViewState extends State<SplashView> {
+  // Timer 3 detik lalu navigasi ke halaman beranda (HomeView)
   @override
   void initState() {
     super.initState();

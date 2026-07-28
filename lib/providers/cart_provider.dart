@@ -3,22 +3,29 @@ import '../models/cart_model.dart';
 import '../models/order_model.dart';
 import '../services/database_helper.dart';
 
+// Provider (state management) untuk mengelola keranjang, auth, alamat, promo, dan pesanan
 class CartProvider extends ChangeNotifier {
+  // Data keranjang belanja
   List<CartItem> _cartItems = [];
+  // Data riwayat pesanan
   List<OrderModel> _orders = [];
 
+  // Status login pengguna
   bool _isLoggedIn = false;
   String _userEmail = '';
 
+  // Data alamat pengiriman
   String _selectedAddress = '';
   String _recipientName = '';
   String _phone = '';
   double _latitude = 0;
   double _longitude = 0;
 
+  // Data promo
   String _promoCode = '';
   double _discountAmount = 0;
 
+  // Data user terdaftar (disimpan di memori, bukan di database)
   final List<Map<String, String>> _registeredUsers = [
     {'email': 'admin@gmail.com', 'password': 'admin123'},
   ];
@@ -35,12 +42,15 @@ class CartProvider extends ChangeNotifier {
   double get discountAmount => _discountAmount;
   List<OrderModel> get orders => _orders;
 
+  // Getter untuk jumlah total item di keranjang (semua produk dijumlah quantity-nya)
   int get cartCount =>
       _cartItems.fold(0, (sum, item) => sum + item.quantity);
 
+  // Menghitung subtotal (harga x jumlah per item, dijumlahkan semua)
   double get subtotal =>
       _cartItems.fold(0, (sum, item) => sum + (item.price * item.quantity));
 
+  // Menghitung total harga akhir = subtotal - diskon (jika pakai kode DISKON50)
   double get totalPrice {
     if (_promoCode.toUpperCase() == 'DISKON50') {
       _discountAmount = subtotal * 0.5;
@@ -50,12 +60,14 @@ class CartProvider extends ChangeNotifier {
     return subtotal - _discountAmount;
   }
 
+  // Inisialisasi: memuat data keranjang dan pesanan dari database saat aplikasi mulai
   Future<void> init() async {
     _cartItems = await DatabaseHelper.getCart();
     _orders = await DatabaseHelper.getOrders();
     notifyListeners();
   }
 
+  // Menambah item ke keranjang; jika sudah ada, kuantitasnya ditambah 1
   Future<void> addToCart(CartItem item) async {
     final index = _cartItems.indexWhere((e) => e.productId == item.productId);
     if (index != -1) {
@@ -68,12 +80,14 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Menghapus satu produk dari keranjang berdasarkan productId
   Future<void> removeFromCart(int productId) async {
     _cartItems.removeWhere((e) => e.productId == productId);
     await DatabaseHelper.deleteCart(productId);
     notifyListeners();
   }
 
+  // Mengubah jumlah item; jika quantity <= 0, item dihapus
   Future<void> updateQuantity(int productId, int quantity) async {
     final index = _cartItems.indexWhere((e) => e.productId == productId);
     if (index != -1) {
@@ -87,12 +101,14 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  // Mengosongkan seluruh keranjang (dari memori dan database)
   Future<void> clearCart() async {
     _cartItems.clear();
     await DatabaseHelper.clearCart();
     notifyListeners();
   }
 
+  // Login: mencocokkan email & password dengan data yang terdaftar
   bool login(String email, String password) {
     final user = _registeredUsers.firstWhere(
       (u) => u['email'] == email && u['password'] == password,
@@ -107,6 +123,7 @@ class CartProvider extends ChangeNotifier {
     return false;
   }
 
+  // Register: mendaftarkan user baru, langsung login otomatis
   bool register(String email, String password) {
     final exists = _registeredUsers.any((u) => u['email'] == email);
     if (exists) return false;
@@ -117,12 +134,14 @@ class CartProvider extends ChangeNotifier {
     return true;
   }
 
+  // Logout: mereset status login
   void logout() {
     _isLoggedIn = false;
     _userEmail = '';
     notifyListeners();
   }
 
+  // Menyimpan data alamat pengiriman (nama, no HP, koordinat GPS)
   void setAddress(
       String address, String name, String phoneNum, double lat, double lng) {
     _selectedAddress = address;
@@ -133,17 +152,20 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Menerapkan kode promo (hanya DISKON50 yang valid = diskon 50%)
   void applyPromoCode(String code) {
     _promoCode = code;
     notifyListeners();
   }
 
+  // Mereset promo yang sudah diterapkan
   void resetPromo() {
     _promoCode = '';
     _discountAmount = 0;
     notifyListeners();
   }
 
+  // Membuat pesanan baru: simpan ke database, kosongkan keranjang, reset promo
   Future<void> createOrder() async {
     final order = OrderModel(
       id: 0,
@@ -181,6 +203,7 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Update bukti pembayaran dan ubah status pesanan jadi "Berhasil"
   Future<void> updateOrderPayment(int orderId, String proof) async {
     await DatabaseHelper.updateOrder(
         orderId, {'paymentProof': proof, 'status': 'Berhasil'});

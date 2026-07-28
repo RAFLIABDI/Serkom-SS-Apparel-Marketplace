@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../providers/cart_provider.dart';
 import '../views/history_view.dart';
 
+// Halaman pembayaran: info rekening bank, upload bukti transfer, dan konfirmasi pembayaran
 class PaymentView extends StatefulWidget {
   const PaymentView({super.key});
 
@@ -18,6 +19,7 @@ class _PaymentViewState extends State<PaymentView> {
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
+  // Mengambil gambar dari kamera atau galeri sebagai bukti transfer
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
@@ -27,6 +29,7 @@ class _PaymentViewState extends State<PaymentView> {
     }
   }
 
+  // Mengirim bukti transfer ke API, lalu update status pesanan jadi "Berhasil"
   Future<void> _completePayment() async {
     if (_proofImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -250,6 +253,7 @@ class _PaymentViewState extends State<PaymentView> {
     );
   }
 
+  // Helper: menampilkan info bank (nama bank, nomor rekening, nama pemilik)
   Widget _bankInfo(String bank, String account, String name) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

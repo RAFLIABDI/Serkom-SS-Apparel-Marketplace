@@ -4,6 +4,7 @@ import '../providers/cart_provider.dart';
 import 'login_view.dart';
 import 'checkout_view.dart';
 
+// Halaman registrasi: form untuk membuat akun baru
 class RegisterView extends StatefulWidget {
   final bool fromCheckout;
   const RegisterView({super.key, this.fromCheckout = false});
@@ -27,6 +28,7 @@ class _RegisterViewState extends State<RegisterView> {
     super.dispose();
   }
 
+  // Proses registrasi: validasi form, daftarkan user baru, navigasi ke checkout atau kembali
   void _register() {
     if (!_formKey.currentState!.validate()) return;
     final cartProvider = Provider.of<CartProvider>(context, listen: false);

@@ -1,9 +1,10 @@
+// Model data untuk item di keranjang belanja
 class CartItem {
-  final int productId;
-  final String title;
-  final String image;
-  final double price;
-  int quantity;
+  final int productId; // ID produk
+  final String title; // Nama produk
+  final String image; // URL gambar produk
+  final double price; // Harga satuan
+  int quantity; // Jumlah yang dibeli (bisa diubah)
 
   CartItem({
     required this.productId,
@@ -13,6 +14,7 @@ class CartItem {
     this.quantity = 1,
   });
 
+  // Mengubah data CartItem menjadi Map untuk disimpan ke database
   Map<String, dynamic> toMap() {
     return {
       'productId': productId,
@@ -23,6 +25,7 @@ class CartItem {
     };
   }
 
+  // Membuat objek CartItem dari data Map yang diambil dari database
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(
       productId: map['productId'] ?? 0,

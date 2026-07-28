@@ -5,6 +5,7 @@ import '../helpers/currency_formatter.dart';
 import 'payment_view.dart';
 import 'add_address_view.dart';
 
+// Halaman checkout: alamat pengiriman, rincian produk, kode promo, dan total harga
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
 
@@ -82,6 +83,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
+  // Bagian alamat: tampilkan alamat atau pesan "belum ada alamat"
   Widget _buildAddressSection(
       BuildContext context, CartProvider cartProvider) {
     return Card(
@@ -159,6 +161,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
+  // Bagian rincian produk: daftar item yang dipesan beserta harga per item
   Widget _buildProductSummary(CartProvider cartProvider) {
     return Card(
       child: Padding(
@@ -199,6 +202,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
+  // Bagian kode promo: input kode dan tombol "Terapkan"
   Widget _buildPromoSection(CartProvider cartProvider) {
     return Card(
       child: Padding(
@@ -272,6 +276,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
+  // Bagian ringkasan harga: subtotal, diskon, dan total akhir
   Widget _buildPriceSummary(CartProvider cartProvider) {
     return Card(
       child: Padding(
@@ -299,6 +304,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
+  // Helper: baris harga dengan label dan nilai
   Widget _priceRow(String label, String value,
       {bool isBold = false, Color? valueColor}) {
     return Padding(
@@ -327,6 +333,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
+  // Bagian metode pembayaran: transfer bank manual
   Widget _buildPaymentMethod() {
     return Card(
       child: Padding(

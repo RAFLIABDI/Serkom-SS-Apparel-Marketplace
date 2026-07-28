@@ -5,6 +5,7 @@ import '../models/cart_model.dart';
 import '../providers/cart_provider.dart';
 import '../helpers/currency_formatter.dart';
 
+// Halaman detail produk: menampilkan gambar, harga, deskripsi, dan tombol "Tambah ke Keranjang"
 class DetailView extends StatelessWidget {
   final PlantModel product;
   const DetailView({super.key, required this.product});

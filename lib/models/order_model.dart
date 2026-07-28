@@ -1,20 +1,21 @@
 import 'dart:convert';
 import 'cart_model.dart';
 
+// Model data untuk pesanan yang sudah dibuat
 class OrderModel {
-  final int id;
-  final List<CartItem> items;
-  final double totalPrice;
-  final double discount;
-  final String promoCode;
-  final String address;
-  final String recipientName;
-  final String phone;
-  final double latitude;
-  final double longitude;
-  final String paymentProof;
-  final String status;
-  final DateTime dateTime;
+  final int id; // ID pesanan (auto-increment dari database)
+  final List<CartItem> items; // Daftar item yang dipesan
+  final double totalPrice; // Total harga (setelah diskon)
+  final double discount; // Nominal diskon
+  final String promoCode; // Kode promo yang digunakan
+  final String address; // Alamat pengiriman
+  final String recipientName; // Nama penerima
+  final String phone; // No. HP penerima
+  final double latitude; // Lintang lokasi pengiriman
+  final double longitude; // Bujur lokasi pengiriman
+  final String paymentProof; // Path file bukti transfer
+  final String status; // Status pesanan
+  final DateTime dateTime; // Waktu pemesanan
 
   OrderModel({
     required this.id,
@@ -32,6 +33,8 @@ class OrderModel {
     required this.dateTime,
   });
 
+  // Mengubah data OrderModel menjadi Map untuk disimpan ke database
+  // Items di-encode ke JSON string karena database tidak bisa menyimpan list langsung
   Map<String, dynamic> toMap() {
     return {
       'items': jsonEncode(items.map((e) => e.toMap()).toList()),
@@ -49,6 +52,8 @@ class OrderModel {
     };
   }
 
+  // Membuat objek OrderModel dari data Map yang diambil dari database
+  // Items yang berupa JSON string di-decode kembali menjadi list CartItem
   factory OrderModel.fromMap(Map<String, dynamic> map) {
     return OrderModel(
       id: map['id'] ?? 0,

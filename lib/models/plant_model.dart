@@ -1,11 +1,12 @@
+// Model data untuk produk/barang yang dijual di marketplace
 class PlantModel {
-  final int id;
-  final String title;
-  final String description;
-  final double price;
-  final String image;
-  final RatingModel rating;
-  final String category;
+  final int id; // ID produk lokal
+  final String title; // Nama produk
+  final String description; // Deskripsi produk
+  final double price; // Harga produk
+  final String image; // URL gambar produk (dari API)
+  final RatingModel rating; // Rating produk
+  final String category; // Kategori produk (Kaos, Tas, Jaket, Aksesoris)
 
   PlantModel({
     required this.id,
@@ -17,6 +18,7 @@ class PlantModel {
     this.category = '',
   });
 
+  // Membuat objek PlantModel dari JSON yang diterima dari API
   factory PlantModel.fromJson(Map<String, dynamic> json) {
     return PlantModel(
       id: json['id'] ?? 0,
@@ -32,12 +34,14 @@ class PlantModel {
   }
 }
 
+// Model data untuk rating produk (bintang dan jumlah ulasan)
 class RatingModel {
-  final double rate;
-  final int count;
+  final double rate; // Nilai rating (misal: 4.5)
+  final int count; // Jumlah orang yang memberi rating
 
   RatingModel({required this.rate, required this.count});
 
+  // Membuat objek RatingModel dari JSON
   factory RatingModel.fromJson(Map<String, dynamic> json) {
     return RatingModel(
       rate: (json['rate'] is int)

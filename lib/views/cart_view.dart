@@ -5,6 +5,7 @@ import '../helpers/currency_formatter.dart';
 import 'checkout_view.dart';
 import 'login_view.dart';
 
+// Halaman keranjang: menampilkan daftar item, jumlah, harga, dan tombol checkout
 class CartView extends StatelessWidget {
   const CartView({super.key});
 
@@ -245,6 +246,7 @@ class CartView extends StatelessWidget {
     );
   }
 
+  // Tombol +/- untuk mengubah jumlah item di keranjang
   Widget _quantityButton(
       {required IconData icon, required VoidCallback onTap}) {
     return InkWell(

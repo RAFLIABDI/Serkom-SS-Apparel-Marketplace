@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import 'providers/cart_provider.dart';
 import 'views/splash_view.dart';
 
+// Fungsi utama yang menjalankan aplikasi Flutter
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
+// Widget utama yang berisi konfigurasi aplikasi: theme, provider, dan route awal
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

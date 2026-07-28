@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 
+// Halaman tambah alamat: form nama, no HP, alamat, dan ambil lokasi GPS
 class AddAddressView extends StatefulWidget {
   const AddAddressView({super.key});
 
@@ -29,6 +30,7 @@ class _AddAddressViewState extends State<AddAddressView> {
     super.dispose();
   }
 
+  // Mengambil lokasi GPS saat ini dan mengisi alamat otomatis via reverse geocoding
   Future<void> _getCurrentLocation() async {
     setState(() => _isLoadingGps = true);
 
@@ -95,6 +97,7 @@ class _AddAddressViewState extends State<AddAddressView> {
     }
   }
 
+  // Mengubah koordinat GPS menjadi alamat teks menggunakan API Nominatim (OpenStreetMap)
   Future<String> _reverseGeocode(double lat, double lng) async {
     try {
       final uri = Uri.parse(
@@ -114,6 +117,7 @@ class _AddAddressViewState extends State<AddAddressView> {
     }
   }
 
+  // Menyimpan alamat ke provider setelah validasi form dan lokasi GPS
   void _saveAddress() {
     if (!_formKey.currentState!.validate()) return;
     if (_latitude == 0 && _longitude == 0) {
