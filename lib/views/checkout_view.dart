@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../helpers/currency_formatter.dart';
 import 'payment_view.dart';
 import 'add_address_view.dart';
 
@@ -57,15 +58,14 @@ class _CheckoutViewState extends State<CheckoutView> {
                         cartProvider.cartItems.isEmpty
                     ? null
                     : () async {
+                        final nav = Navigator.of(context);
                         await cartProvider.createOrder();
-                        if (mounted) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PaymentView(),
-                            ),
-                          );
-                        }
+                        if (!mounted) return;
+                        nav.push(
+                          MaterialPageRoute(
+                            builder: (_) => const PaymentView(),
+                          ),
+                        );
                       },
                 child: const Text(
                   'Lanjut ke Pembayaran',
@@ -82,7 +82,8 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
   }
 
-  Widget _buildAddressSection(BuildContext context, CartProvider cartProvider) {
+  Widget _buildAddressSection(
+      BuildContext context, CartProvider cartProvider) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -94,7 +95,8 @@ class _CheckoutViewState extends State<CheckoutView> {
               children: [
                 const Text(
                   'Alamat Pengiriman',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TextButton.icon(
                   onPressed: () async {
@@ -130,15 +132,16 @@ class _CheckoutViewState extends State<CheckoutView> {
               const SizedBox(height: 4),
               Text(cartProvider.selectedAddress),
               const SizedBox(height: 8),
-              if (cartProvider.latitude != 0 && cartProvider.longitude != 0)
+              if (cartProvider.latitude != 0 &&
+                  cartProvider.longitude != 0)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    'https://static-maps.yandex.ru/1.x/?ll=${cartProvider.longitude},${cartProvider.latitude}&z=16&l=sat,skl&size=450,200&pt=${cartProvider.longitude},${cartProvider.latitude},pm2rdm',
+                    'https://static-maps.yandex.ru/v1?ll=${cartProvider.longitude},${cartProvider.latitude}&z=15&size=600,300&l=sat&lang=id_ID&apikey=demo',
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       height: 150,
                       width: double.infinity,
                       color: Colors.blue.shade50,
@@ -168,24 +171,28 @@ class _CheckoutViewState extends State<CheckoutView> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ...cartProvider.cartItems.map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${item.title} x${item.quantity}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+            ...cartProvider.cartItems.map((item) {
+              final lineTotal = item.price * item.quantity;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${item.title} x${item.quantity}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
-                        'Rp ${(item.price * item.quantity).toStringAsFixed(0)}',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                    Text(
+                      CurrencyFormatter.format(lineTotal),
+                      style:
+                          const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
@@ -233,7 +240,8 @@ class _CheckoutViewState extends State<CheckoutView> {
                     cartProvider.applyPromoCode(code);
                     setState(() {
                       if (code.toUpperCase() == 'DISKON50') {
-                        _promoMessage = 'Kode DISKON50 berhasil diterapkan! (50% diskon)';
+                        _promoMessage =
+                            'Kode DISKON50 berhasil! (Diskon 50%)';
                       } else if (code.isEmpty) {
                         _promoMessage = 'Masukkan kode promo';
                       } else {
@@ -270,17 +278,18 @@ class _CheckoutViewState extends State<CheckoutView> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _priceRow('Subtotal', 'Rp ${cartProvider.subtotal.toStringAsFixed(0)}'),
+            _priceRow('Subtotal',
+                CurrencyFormatter.format(cartProvider.subtotal)),
             if (cartProvider.discountAmount > 0)
               _priceRow(
                 'Diskon (${cartProvider.promoCode})',
-                '- Rp ${cartProvider.discountAmount.toStringAsFixed(0)}',
+                '- ${CurrencyFormatter.format(cartProvider.discountAmount)}',
                 valueColor: Colors.green,
               ),
             const Divider(),
             _priceRow(
               'Total Akhir',
-              'Rp ${cartProvider.totalPrice.toStringAsFixed(0)}',
+              CurrencyFormatter.format(cartProvider.totalPrice),
               isBold: true,
               valueColor: Colors.blue,
             ),
@@ -301,7 +310,8 @@ class _CheckoutViewState extends State<CheckoutView> {
             label,
             style: TextStyle(
               fontSize: isBold ? 16 : 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontWeight:
+                  isBold ? FontWeight.bold : FontWeight.normal,
             ),
           ),
           Text(

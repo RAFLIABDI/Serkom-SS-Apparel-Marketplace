@@ -18,6 +18,7 @@ class _HistoryViewState extends State<HistoryView> {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null) return;
 
+    if (!mounted) return;
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     await cartProvider.updateOrderPayment(orderId, pickedFile.path);
 
@@ -163,7 +164,7 @@ class _HistoryViewState extends State<HistoryView> {
                                   height: 120,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
+                                  errorBuilder: (_, _, _) => Container(
                                     height: 120,
                                     width: double.infinity,
                                     color: Colors.blue.shade50,
@@ -189,8 +190,8 @@ class _HistoryViewState extends State<HistoryView> {
                                   height: 120,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Text('Bukti tidak tersedia'),
+                                      errorBuilder: (_, _, _) =>
+                                          const Text('Bukti tidak tersedia'),
                                 ),
                               ),
                             ],

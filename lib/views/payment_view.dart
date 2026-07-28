@@ -128,7 +128,7 @@ class _PaymentViewState extends State<PaymentView> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Transfer sebesar Rp ${cartProvider.totalPrice.toStringAsFixed(0)} ke rekening di atas, lalu unggah bukti transfer.',
+                              'Transfer sebesar Rp ${cartProvider.orders.isNotEmpty ? cartProvider.orders.first.totalPrice.toStringAsFixed(0) : '0'} ke rekening di atas, lalu unggah bukti transfer.',
                               style: const TextStyle(fontSize: 13),
                             ),
                           ),

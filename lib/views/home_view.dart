@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
 import '../models/plant_model.dart';
+import '../helpers/currency_formatter.dart';
 import 'detail_view.dart';
 import 'cart_view.dart';
 import 'login_view.dart';
@@ -19,6 +20,13 @@ class _HomeViewState extends State<HomeView> {
   String _searchQuery = '';
   String _selectedCategory = '';
   final TextEditingController _searchController = TextEditingController();
+  late Future<List<PlantModel>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = ApiService.getProducts();
+  }
 
   @override
   void dispose() {
@@ -95,36 +103,53 @@ class _HomeViewState extends State<HomeView> {
         ],
       ),
       drawer: _buildDrawer(context, cartProvider),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPromoBanner(),
-            _buildCategories(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _selectedCategory.isEmpty
-                        ? 'Semua Produk'
-                        : 'Kategori: $_selectedCategory',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  if (_selectedCategory.isNotEmpty)
-                    TextButton(
-                      onPressed: () => setState(() => _selectedCategory = ''),
-                      child: const Text('Reset'),
-                    ),
-                ],
+      body: FutureBuilder<List<PlantModel>>(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
               ),
+            );
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          final allProducts = snapshot.data ?? [];
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPromoBanner(allProducts),
+                _buildCategories(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedCategory.isEmpty
+                            ? 'Semua Produk'
+                            : 'Kategori: $_selectedCategory',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      if (_selectedCategory.isNotEmpty)
+                        TextButton(
+                          onPressed: () => setState(() => _selectedCategory = ''),
+                          child: const Text('Reset'),
+                        ),
+                    ],
+                  ),
+                ),
+                _buildProductGrid(allProducts),
+              ],
             ),
-            _buildProductGrid(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -212,23 +237,12 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget _buildPromoBanner() {
+  Widget _buildPromoBanner(List<PlantModel> products) {
     return SizedBox(
       height: 160,
-      child: FutureBuilder<List<PlantModel>>(
-        future: ApiService.getProducts(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          final products = snapshot.data ?? [];
-          if (products.isEmpty) {
-            return const Center(child: Text('Tidak ada promo'));
-          }
-          return PageView.builder(
+      child: products.isEmpty
+          ? const Center(child: Text('Tidak ada promo'))
+          : PageView.builder(
             itemCount: products.length > 5 ? 5 : products.length,
             controller: PageController(viewportFraction: 0.9),
             itemBuilder: (context, index) {
@@ -286,7 +300,7 @@ class _HomeViewState extends State<HomeView> {
                             Row(
                               children: [
                                 Text(
-                                  'Rp ${discountedPrice.toStringAsFixed(0)}',
+                                  CurrencyFormatter.format(discountedPrice),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -295,7 +309,7 @@ class _HomeViewState extends State<HomeView> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Rp ${product.price.toStringAsFixed(0)}',
+                                  CurrencyFormatter.format(product.price),
                                   style: const TextStyle(
                                     color: Colors.white54,
                                     fontSize: 12,
@@ -316,7 +330,7 @@ class _HomeViewState extends State<HomeView> {
                         child: Image.network(
                           product.image,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (_, _, _) => const Icon(
                             Icons.image_not_supported,
                             color: Colors.white54,
                             size: 48,
@@ -328,9 +342,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
               );
             },
-          );
-        },
-      ),
+          ),
     );
   }
 
@@ -386,149 +398,133 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget _buildProductGrid() {
-    return FutureBuilder<List<PlantModel>>(
-      future: ApiService.getProducts(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
+  Widget _buildProductGrid(List<PlantModel> allProducts) {
+    var products = allProducts;
+    if (_selectedCategory.isNotEmpty) {
+      products = products
+          .where((p) => p.category == _selectedCategory)
+          .toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      products = products
+          .where((p) =>
+              p.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
+    }
+    if (products.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text('Produk tidak ditemukan'),
+        ),
+      );
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.72,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailView(product: product),
             ),
-          );
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        var products = snapshot.data ?? [];
-        if (_selectedCategory.isNotEmpty) {
-          products = products
-              .where((p) => p.category == _selectedCategory)
-              .toList();
-        }
-        if (_searchQuery.isNotEmpty) {
-          products = products
-              .where((p) =>
-                  p.title.toLowerCase().contains(_searchQuery.toLowerCase()))
-              .toList();
-        }
-        if (products.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Text('Produk tidak ditemukan'),
-            ),
-          );
-        }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(12),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.72,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
           ),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            final product = products[index];
-            return GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DetailView(product: product),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                    ),
+                    child: Image.network(
+                      product.image,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
+                        size: 48,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(12),
-                          ),
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Image.network(
-                          product.image,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.image_not_supported,
-                            color: Colors.grey,
-                            size: 48,
+                        child: Text(
+                          product.category,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.blue.shade700,
                           ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 4),
+                      Text(
+                        product.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        CurrencyFormatter.format(product.price),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade100,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              product.category,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.blue.shade700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
+                          const Icon(Icons.star,
+                              size: 14, color: Colors.orange),
+                          const SizedBox(width: 4),
                           Text(
-                            product.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Rp ${product.price.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(Icons.star,
-                                  size: 14, color: Colors.orange),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${product.rating.rate}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+                            '${product.rating.rate}',
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+          ),
         );
       },
     );

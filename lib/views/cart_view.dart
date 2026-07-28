@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../helpers/currency_formatter.dart';
 import 'checkout_view.dart';
 import 'login_view.dart';
 
@@ -35,7 +36,8 @@ class CartView extends StatelessWidget {
                           cartProvider.clearCart();
                           Navigator.pop(ctx);
                         },
-                        child: const Text('Ya', style: TextStyle(color: Colors.red)),
+                        child: const Text('Ya',
+                            style: TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -49,7 +51,8 @@ class CartView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
+                  Icon(Icons.shopping_cart_outlined,
+                      size: 80, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
                     'Keranjang kosong',
@@ -66,6 +69,7 @@ class CartView extends StatelessWidget {
                     itemCount: cartItems.length,
                     itemBuilder: (context, index) {
                       final item = cartItems[index];
+                      final lineTotal = item.price * item.quantity;
                       return Card(
                         margin: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
@@ -83,8 +87,9 @@ class CartView extends StatelessWidget {
                                 child: Image.network(
                                   item.image,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.image, color: Colors.grey),
+                                    errorBuilder: (_, _, _) => const Icon(
+                                        Icons.image,
+                                        color: Colors.grey),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -103,10 +108,18 @@ class CartView extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Rp ${item.price.toStringAsFixed(0)}',
+                                      '${CurrencyFormatter.format(item.price)} x ${item.quantity}',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      CurrencyFormatter.format(lineTotal),
                                       style: const TextStyle(
                                         color: Colors.blue,
                                         fontWeight: FontWeight.bold,
+                                        fontSize: 15,
                                       ),
                                     ),
                                   ],
@@ -118,7 +131,8 @@ class CartView extends StatelessWidget {
                                     children: [
                                       _quantityButton(
                                         icon: Icons.remove,
-                                        onTap: () => cartProvider.updateQuantity(
+                                        onTap: () =>
+                                            cartProvider.updateQuantity(
                                           item.productId,
                                           item.quantity - 1,
                                         ),
@@ -135,7 +149,8 @@ class CartView extends StatelessWidget {
                                       ),
                                       _quantityButton(
                                         icon: Icons.add,
-                                        onTap: () => cartProvider.updateQuantity(
+                                        onTap: () =>
+                                            cartProvider.updateQuantity(
                                           item.productId,
                                           item.quantity + 1,
                                         ),
@@ -168,10 +183,13 @@ class CartView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total Belanja',
-                              style: TextStyle(fontSize: 16)),
                           Text(
-                            'Rp ${cartProvider.subtotal.toStringAsFixed(0)}',
+                            'Total Belanja (${cartProvider.cartCount} item)',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          Text(
+                            CurrencyFormatter.format(
+                                cartProvider.subtotal),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -197,7 +215,8 @@ class CartView extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const LoginView(fromCheckout: true),
+                                  builder: (_) =>
+                                      const LoginView(fromCheckout: true),
                                 ),
                               );
                             } else {

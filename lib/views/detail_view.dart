@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/plant_model.dart';
 import '../models/cart_model.dart';
 import '../providers/cart_provider.dart';
+import '../helpers/currency_formatter.dart';
 
 class DetailView extends StatelessWidget {
   final PlantModel product;
@@ -32,7 +33,7 @@ class DetailView extends StatelessWidget {
               child: Image.network(
                 product.image,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                errorBuilder: (_, _, _) => const Icon(
                   Icons.image_not_supported,
                   size: 80,
                   color: Colors.grey,
@@ -44,6 +45,22 @@ class DetailView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      product.category,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Text(
                     product.title,
                     style: const TextStyle(
@@ -54,26 +71,28 @@ class DetailView extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.orange, size: 20),
+                      const Icon(Icons.star,
+                          color: Colors.orange, size: 20),
                       const SizedBox(width: 4),
                       Text(
                         '${product.rating.rate} (${product.rating.count} ulasan)',
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: const TextStyle(
+                            fontSize: 14, color: Colors.grey),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Rp ${product.price.toStringAsFixed(0)}',
+                    CurrencyFormatter.format(product.price),
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.blue,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
-                    'Diskon 50%: Rp ${(product.price * 0.5).toStringAsFixed(0)}',
+                    'Harga diskon: ${CurrencyFormatter.format(product.price * 0.5)}',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.red,
@@ -119,7 +138,8 @@ class DetailView extends StatelessWidget {
                         cartProvider.addToCart(cartItem);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('${product.title} ditambahkan ke keranjang'),
+                            content: Text(
+                                '${product.title} ditambahkan ke keranjang'),
                             backgroundColor: Colors.green,
                           ),
                         );
