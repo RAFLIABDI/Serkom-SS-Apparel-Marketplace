@@ -178,7 +178,7 @@ class CartProvider extends ChangeNotifier {
       phone: _phone,
       latitude: _latitude,
       longitude: _longitude,
-      status: 'Konfirmasi Pembayaran',
+      status: 'Menunggu',
       dateTime: DateTime.now(),
     );
     final id = await DatabaseHelper.insertOrder(order);
@@ -206,7 +206,7 @@ class CartProvider extends ChangeNotifier {
   // Update bukti pembayaran dan ubah status pesanan jadi "Berhasil"
   Future<void> updateOrderPayment(int orderId, String proof) async {
     await DatabaseHelper.updateOrder(
-        orderId, {'paymentProof': proof, 'status': 'Berhasil'});
+        orderId, {'paymentProof': proof, 'status': 'Konfirmasi Pembayaran'});
     final index = _orders.indexWhere((e) => e.id == orderId);
     if (index != -1) {
       final old = _orders[index];
@@ -222,7 +222,7 @@ class CartProvider extends ChangeNotifier {
         latitude: old.latitude,
         longitude: old.longitude,
         paymentProof: proof,
-        status: 'Berhasil',
+        status: 'Konfirmasi Pembayaran',
         dateTime: old.dateTime,
       );
     }

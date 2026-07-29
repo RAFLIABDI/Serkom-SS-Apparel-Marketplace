@@ -61,16 +61,25 @@ class _HistoryViewState extends State<HistoryView> {
               itemBuilder: (context, index) {
                 final order = orders[index];
                 final isPending =
+                    order.status == 'Menunggu';
+                final isWaitingConfirmation =
                     order.status == 'Konfirmasi Pembayaran';
                 return Card(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   child: ExpansionTile(
                     leading: CircleAvatar(
-                      backgroundColor:
-                          isPending ? Colors.orange : Colors.green,
+                      backgroundColor: isPending
+                          ? Colors.orange
+                          : isWaitingConfirmation
+                              ? Colors.blue
+                              : Colors.green,
                       child: Icon(
-                        isPending ? Icons.pending : Icons.check_circle,
+                        isPending
+                            ? Icons.pending
+                            : isWaitingConfirmation
+                                ? Icons.visibility
+                                : Icons.check_circle,
                         color: Colors.white,
                       ),
                     ),
@@ -91,7 +100,11 @@ class _HistoryViewState extends State<HistoryView> {
                         Text(
                           order.status,
                           style: TextStyle(
-                            color: isPending ? Colors.orange : Colors.green,
+                            color: isPending
+                                ? Colors.orange
+                                : isWaitingConfirmation
+                                    ? Colors.blue
+                                    : Colors.green,
                             fontSize: 12,
                           ),
                         ),
@@ -214,6 +227,28 @@ class _HistoryViewState extends State<HistoryView> {
                                   icon: const Icon(Icons.upload),
                                   label:
                                       const Text('Unggah Bukti Pembayaran'),
+                                ),
+                              ),
+                            ] else if (isWaitingConfirmation) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        color: Colors.blue, size: 20),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Bukti sedang diperiksa admin',
+                                        style: TextStyle(color: Colors.blue),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],

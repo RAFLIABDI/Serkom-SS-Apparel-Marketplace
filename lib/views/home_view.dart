@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/database_helper.dart';
 import '../models/plant_model.dart';
 import '../helpers/currency_formatter.dart';
+import '../helpers/product_image.dart';
 import 'detail_view.dart';
 import 'cart_view.dart';
 import 'login_view.dart';
 import 'history_view.dart';
 
-// Halaman beranda: menampilkan banner promo, kategori, dan daftar produk
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -23,16 +25,31 @@ class _HomeViewState extends State<HomeView> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<PlantModel>> _productsFuture;
 
+  // Inisialisasi data produk saat widget dibuat
   @override
   void initState() {
     super.initState();
-    _productsFuture = ApiService.getProducts();
+    _productsFuture = _loadAllProducts();
   }
 
+  // Bersihkan controller saat widget dihapus
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Gabungkan produk API dengan produk dari database lokal
+  Future<List<PlantModel>> _loadAllProducts() async {
+    final apiProducts = await ApiService.getProducts();
+    try {
+      final localProducts = await DatabaseHelper.getLocalProducts();
+      final localPlantModels =
+          localProducts.map((map) => PlantModel.fromDbMap(map)).toList();
+      return [...apiProducts, ...localPlantModels];
+    } catch (_) {
+      return apiProducts;
+    }
   }
 
   @override
@@ -103,7 +120,7 @@ class _HomeViewState extends State<HomeView> {
           ),
         ],
       ),
-      drawer: _buildDrawer(context, cartProvider),
+      drawer: _buildDrawer(context),
       body: FutureBuilder<List<PlantModel>>(
         future: _productsFuture,
         builder: (context, snapshot) {
@@ -155,8 +172,10 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // Membangun drawer (menu samping) dengan info user, link ke riwayat, keranjang, dan login/logout
-  Widget _buildDrawer(BuildContext context, CartProvider cartProvider) {
+  // Buat drawer navigasi dengan informasi user
+  Widget _buildDrawer(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -164,18 +183,16 @@ class _HomeViewState extends State<HomeView> {
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: Colors.blue),
             accountName: Text(
-              cartProvider.isLoggedIn ? cartProvider.userEmail : 'Tamu',
+              auth.isLoggedIn ? auth.name : 'Tamu',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             accountEmail: Text(
-              cartProvider.isLoggedIn
-                  ? 'Masuk sebagai pengguna'
-                  : 'Belum masuk',
+              auth.isLoggedIn ? auth.email : 'Belum masuk',
             ),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Icon(
-                cartProvider.isLoggedIn ? Icons.person : Icons.person_outline,
+                auth.isLoggedIn ? Icons.person : Icons.person_outline,
                 color: Colors.blue,
               ),
             ),
@@ -208,13 +225,12 @@ class _HomeViewState extends State<HomeView> {
             },
           ),
           const Divider(),
-          if (cartProvider.isLoggedIn)
+          if (auth.isLoggedIn)
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title:
-                  const Text('Logout', style: TextStyle(color: Colors.red)),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
               onTap: () {
-                cartProvider.logout();
+                auth.logout();
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Berhasil logout')),
@@ -224,8 +240,7 @@ class _HomeViewState extends State<HomeView> {
           else
             ListTile(
               leading: const Icon(Icons.login, color: Colors.blue),
-              title:
-                  const Text('Login', style: TextStyle(color: Colors.blue)),
+              title: const Text('Login', style: TextStyle(color: Colors.blue)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -239,117 +254,114 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // Membangun banner promo horizontal (PageView) yang menampilkan 5 produk teratas
+  // Tampilkan banner promo dengan diskon 50%
   Widget _buildPromoBanner(List<PlantModel> products) {
+    final promoProducts = products.take(5).toList();
     return SizedBox(
       height: 160,
-      child: products.isEmpty
+      child: promoProducts.isEmpty
           ? const Center(child: Text('Tidak ada promo'))
           : PageView.builder(
-            itemCount: products.length > 5 ? 5 : products.length,
-            controller: PageController(viewportFraction: 0.9),
-            itemBuilder: (context, index) {
-              final product = products[index];
-              final discountedPrice = product.price * 0.5;
-              return Container(
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade700, Colors.blue.shade400],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              itemCount: promoProducts.length,
+              controller: PageController(viewportFraction: 0.9),
+              itemBuilder: (context, index) {
+                final product = promoProducts[index];
+                final discountedPrice = product.price * 0.5;
+                return Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue.shade700, Colors.blue.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.orange,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                'DISKON 50%',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              product.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Text(
-                                  CurrencyFormatter.format(discountedPrice),
-                                  style: const TextStyle(
+                                child: const Text(
+                                  'DISKON 50%',
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  CurrencyFormatter.format(product.price),
-                                  style: const TextStyle(
-                                    color: Colors.white54,
                                     fontSize: 12,
-                                    decoration:
-                                        TextDecoration.lineThrough,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Image.network(
-                          product.image,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => const Icon(
-                            Icons.image_not_supported,
-                            color: Colors.white54,
-                            size: 48,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                product.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    CurrencyFormatter.format(discountedPrice),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    CurrencyFormatter.format(product.price),
+                                    style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 12,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                      Expanded(
+                        flex: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: productImage(
+                            product.image,
+                            width: double.infinity,
+                            height: 120,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 
-  // Membangun tombol kategori (Kaos, Tas, Jaket, Aksesoris) untuk filter produk
+  // Tampilkan kategori produk untuk filter
   Widget _buildCategories() {
     final categories = [
       {'icon': Icons.checkroom, 'label': 'Kaos'},
@@ -402,7 +414,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // Membangun grid produk dengan filter berdasarkan kategori dan kata kunci pencarian
+  // Tampilkan grid produk dengan filter dan pencarian
   Widget _buildProductGrid(List<PlantModel> allProducts) {
     var products = allProducts;
     if (_selectedCategory.isNotEmpty) {
@@ -462,14 +474,11 @@ class _HomeViewState extends State<HomeView> {
                         top: Radius.circular(12),
                       ),
                     ),
-                    child: Image.network(
+                    child: productImage(
                       product.image,
+                      width: double.infinity,
+                      height: double.infinity,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
-                        size: 48,
-                      ),
                     ),
                   ),
                 ),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import 'login_view.dart';
 import 'checkout_view.dart';
 
-// Halaman registrasi: form untuk membuat akun baru
 class RegisterView extends StatefulWidget {
   final bool fromCheckout;
   const RegisterView({super.key, this.fromCheckout = false});
@@ -15,27 +14,37 @@ class RegisterView extends StatefulWidget {
 
 class _RegisterViewState extends State<RegisterView> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
+  // Bersihkan controller saat widget dihapus
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
   }
 
-  // Proses registrasi: validasi form, daftarkan user baru, navigasi ke checkout atau kembali
-  void _register() {
+  // Proses registrasi akun baru
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    final success = cartProvider.register(
+    setState(() => _isLoading = true);
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final success = await auth.register(
+      _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
     );
+
+    setState(() => _isLoading = false);
+
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -43,7 +52,7 @@ class _RegisterViewState extends State<RegisterView> {
           backgroundColor: Colors.green,
         ),
       );
-      if (widget.fromCheckout && cartProvider.cartItems.isNotEmpty) {
+      if (widget.fromCheckout) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const CheckoutView()),
@@ -54,7 +63,7 @@ class _RegisterViewState extends State<RegisterView> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email sudah terdaftar'),
+          content: Text('Email sudah terdaftar atau tidak valid'),
           backgroundColor: Colors.red,
         ),
       );
@@ -94,6 +103,24 @@ class _RegisterViewState extends State<RegisterView> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                TextFormField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: 'Nama Lengkap',
+                    prefixIcon: const Icon(Icons.person),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nama harus diisi';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -175,14 +202,21 @@ class _RegisterViewState extends State<RegisterView> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _register,
-                    child: const Text(
-                      'Daftar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _register,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Daftar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 16),

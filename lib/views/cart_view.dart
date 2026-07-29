@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import '../helpers/currency_formatter.dart';
+import '../helpers/product_image.dart';
 import 'checkout_view.dart';
 import 'login_view.dart';
 
-// Halaman keranjang: menampilkan daftar item, jumlah, harga, dan tombol checkout
 class CartView extends StatelessWidget {
   const CartView({super.key});
 
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
     final cartItems = cartProvider.cartItems;
 
     return Scaffold(
@@ -78,20 +80,11 @@ class CartView extends StatelessWidget {
                           padding: const EdgeInsets.all(8),
                           child: Row(
                             children: [
-                              Container(
+                              productImage(
+                                item.image,
                                 width: 70,
                                 height: 70,
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Image.network(
-                                  item.image,
-                                  fit: BoxFit.contain,
-                                    errorBuilder: (_, _, _) => const Icon(
-                                        Icons.image,
-                                        color: Colors.grey),
-                                ),
+                                fit: BoxFit.contain,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -212,7 +205,7 @@ class CartView extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
-                            if (!cartProvider.isLoggedIn) {
+                            if (!auth.isLoggedIn) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -246,7 +239,7 @@ class CartView extends StatelessWidget {
     );
   }
 
-  // Tombol +/- untuk mengubah jumlah item di keranjang
+  // Tombol untuk menambah atau mengurangi jumlah item
   Widget _quantityButton(
       {required IconData icon, required VoidCallback onTap}) {
     return InkWell(

@@ -4,8 +4,8 @@ import '../models/plant_model.dart';
 import '../models/cart_model.dart';
 import '../providers/cart_provider.dart';
 import '../helpers/currency_formatter.dart';
+import '../helpers/product_image.dart';
 
-// Halaman detail produk: menampilkan gambar, harga, deskripsi, dan tombol "Tambah ke Keranjang"
 class DetailView extends StatelessWidget {
   final PlantModel product;
   const DetailView({super.key, required this.product});
@@ -31,14 +31,11 @@ class DetailView extends StatelessWidget {
               height: 300,
               color: Colors.blue.shade50,
               padding: const EdgeInsets.all(24),
-              child: Image.network(
+              child: productImage(
                 product.image,
+                width: double.infinity,
+                height: double.infinity,
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.image_not_supported,
-                  size: 80,
-                  color: Colors.grey,
-                ),
               ),
             ),
             Padding(

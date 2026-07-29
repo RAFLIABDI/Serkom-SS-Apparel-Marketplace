@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import 'register_view.dart';
 import 'checkout_view.dart';
+import 'admin/admin_dashboard_view.dart';
 
-// Halaman login: form email & password untuk masuk ke akun
 class LoginView extends StatefulWidget {
   final bool fromCheckout;
   const LoginView({super.key, this.fromCheckout = false});
@@ -18,7 +18,9 @@ class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
+  // Bersihkan controller saat widget dihapus
   @override
   void dispose() {
     _emailController.dispose();
@@ -26,22 +28,32 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
-  // Proses login: validasi form, cek email & password, navigasi ke checkout atau kembali
-  void _login() {
+  // Proses login dengan AuthProvider
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    final success = cartProvider.login(
+    setState(() => _isLoading = true);
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final role = await auth.login(
       _emailController.text.trim(),
       _passwordController.text,
     );
-    if (success) {
+
+    setState(() => _isLoading = false);
+
+    if (role == 'admin') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminDashboardView()),
+      );
+    } else if (role == 'user') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Berhasil masuk!'),
           backgroundColor: Colors.green,
         ),
       );
-      if (widget.fromCheckout && cartProvider.cartItems.isNotEmpty) {
+      if (widget.fromCheckout) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const CheckoutView()),
@@ -155,14 +167,21 @@ class _LoginViewState extends State<LoginView> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _login,
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Masuk',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -187,7 +206,7 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Akun admin: admin@gmail.com / admin123',
+                  'Akun admin: Admintoko@gmail.com / admin123',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
